@@ -1,30 +1,39 @@
 import pandas as pd
 import re
+import os
 from sklearn.model_selection import train_test_split
 
-# Load raw dataset
-raw_path = "data/raw/namibia_news_sample.csv"
-df = pd.read_csv(raw_path)
+RAW_CSV = "data/raw/Namibian_real_and_fake_news.csv"
+PROCESSED_DIR = "data/processed"
 
-# Clean text (lowercase, remove special chars)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
+
+# --- Load CSV ---
+df = pd.read_csv(RAW_CSV, encoding="ISO-8859-1")
+
+
+
+print("Raw data loaded:", df.shape)
+print(df.head())
+
+# --- Clean text ---
 def clean_text(text):
-    text = text.lower()
-    text = re.sub(r"[^a-zA-Z0-9\sáéíóúäëïöüñ]", "", text)  # keep Afrikaans accents
+    if not isinstance(text, str):
+        return ""
+    text = re.sub(r"http\S+", "", text)  # remove URLs
+    text = re.sub(r"[^A-Za-zÄäÖöÜüßÉéÈèÊêÁáÀàÂâÍíÎîÓóÒòÔôÚúÛû\s]", "", text)  # keep English + Afrikaans chars
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
-df["headline"] = df["headline"].astype(str).apply(clean_text)
-df["body"] = df["body"].astype(str).apply(clean_text)
+df["clean_text"] = df["content"].apply(clean_text)
 
-# Encode labels (real=0, fake=1)
-df["label"] = df["label"].map({"real": 0, "fake": 1})
-
-# Split into train/test (80/20)
+# --- Train/test split ---
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df["label"])
 
-# Save processed datasets
-train_df.to_csv("data/processed/train.csv", index=False)
-test_df.to_csv("data/processed/test.csv", index=False)
+train_df.to_csv(os.path.join(PROCESSED_DIR, "train.csv"), index=False)
+test_df.to_csv(os.path.join(PROCESSED_DIR, "test.csv"), index=False)
+df.to_csv(os.path.join(PROCESSED_DIR, "processed_full.csv"), index=False)
 
-print("✅ Data preprocessing complete!")
-print(f"Train set: {train_df.shape[0]} samples")
-print(f"Test set: {test_df.shape[0]} samples")
+print("✅ Preprocessing complete.")
+print("Train size:", train_df.shape, "Test size:", test_df.shape)
+print("Saved to:", PROCESSED_DIR)

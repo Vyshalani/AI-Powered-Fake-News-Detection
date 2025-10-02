@@ -1,18 +1,12 @@
-# ----------------- MODEL -----------------
+model_type: "logreg"   # or "3han"
 model_path: "models/final_model.pt"
+vocab_path: "models/vocab.pkl"
+device: "cpu"
 max_len: 100
-device: "cuda"  # or "cpu"
-
-# ----------------- DATA -----------------
-vocab_path: "models/vocab.pkl"  # optional: save/load vocab
-evidence_dir: "retrieval/evidence_store"
-
-# ----------------- RETRIEVAL -----------------
 fetch_web: true
 num_evidence: 5
-serpapi_key: "YOUR_SERPAPI_KEY"
-
-# ----------------- CLASSIFIER -----------------
 label_mapping:
-  0: "Real"
-  1: "Fake"
+  0: "Fake"
+  1: "Real"
+
+

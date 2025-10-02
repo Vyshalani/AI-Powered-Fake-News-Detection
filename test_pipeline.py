@@ -1,6 +1,6 @@
 from pipeline.detect import detect_claim
 
-claim = "Namcor arrests CEO for corruption"
+claim = "Unverified reports claim gangs are kidnapping people daily for massive ransoms. Witnesses describe the crimes as shocking, unstoppable, and beyond imagination. Social media slogans repeat: “Kidnapped everywhere, kidnapped everywhere, kidnapped everywhere.” No police statistics or official data confirm this. Still, believers call it the worst kidnapping wave ever. Commentators insist Namibia is powerless to stop it. Critics call the rumors fabricated and exaggerated. Despite this, many share the story widely. Families describe themselves as terrified beyond measure. The story is being hailed as massive, magical, and unprecedented."
 verdict, confidence, evidence, similarity = detect_claim(claim)
 
 print("\n" + "="*50)
