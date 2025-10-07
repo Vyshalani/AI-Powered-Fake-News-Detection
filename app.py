@@ -1,5 +1,5 @@
 import streamlit as st
-from pipeline.detect import detect_claim
+import pipeline.detect as detect
 import pandas as pd
 import time
 
@@ -19,6 +19,7 @@ st.sidebar.title("⚙️ Options")
 lang = st.sidebar.radio("Language", ["English", "Afrikaans"])
 st.sidebar.markdown("---")
 show_history = st.sidebar.checkbox("Show Claim History", True)
+
 
 # --- Main Title ---
 st.title("📰 Namibian Fake News Detector")
@@ -41,9 +42,14 @@ if st.button("🔍 Verify Claim", use_container_width=True):
         with st.spinner("Analyzing claim with AI..."):
             time.sleep(1)  # simulate loading
 
+            import pipeline.detect as detect
+            
+
+
             # call once and unpack robustly
-            res = detect_claim(claim)
-            # support tuple/list of length 3 or 4 (or a dict)
+            res = detect.detect_claim(claim)
+
+
             if isinstance(res, (list, tuple)):
                 if len(res) >= 4:
                     verdict, confidence, evidence, similarity = res[:4]
@@ -51,11 +57,9 @@ if st.button("🔍 Verify Claim", use_container_width=True):
                     verdict, confidence, evidence = res
                     similarity = None
                 else:
-                    # unexpected return shape
                     st.error("Unexpected response shape from detect_claim().")
                     raise RuntimeError("detect_claim returned unexpected number of values")
             elif isinstance(res, dict):
-                # in case detect_claim returns a dict
                 verdict = res.get("verdict") or res.get("label")
                 confidence = res.get("confidence") or res.get("probability")
                 evidence = res.get("evidence") or []
@@ -63,6 +67,8 @@ if st.button("🔍 Verify Claim", use_container_width=True):
             else:
                 st.error("Unexpected response type from detect_claim().")
                 raise RuntimeError("detect_claim returned unexpected type")
+
+
 
         # Save to history
         st.session_state.history.append({
@@ -120,6 +126,15 @@ if st.button("🔍 Verify Claim", use_container_width=True):
                 else:
                     st.markdown("Evidence similarity: N/A")
 
+                    with col2:
+                     st.subheader("Confidence")
+                    st.progress(int(confidence * 100))
+                    st.markdown(f"**{confidence:.2f}**")
+
+                if similarity is not None:
+                    st.markdown(f"**Evidence Similarity:** {similarity:.2f}")
+
+
         # --- Evidence Section ---
         st.subheader("📚 Supporting Evidence")
         if evidence:
@@ -142,3 +157,5 @@ if show_history and st.session_state.history:
 
     df = pd.DataFrame(st.session_state.history)
     st.dataframe(df[["claim", "verdict", "confidence"]])
+
+
