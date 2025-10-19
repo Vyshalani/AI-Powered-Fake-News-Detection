@@ -1,6 +1,4 @@
-model_type: "logreg"   # or "3han"
-model_path: "models/final_model.pt"
-vocab_path: "models/vocab.pkl"
+model_type: "logreg"   
 device: "cpu"
 max_len: 100
 fetch_web: true
