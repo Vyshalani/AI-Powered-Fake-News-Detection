@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namibian Fake News Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>⚙️ Options</h2>
+        
+        <div class="language-section">
+            <h3>LANGUAGE</h3>
+            <div class="language-options">
+                <div class="lang-option selected" onclick="selectLanguage('english')">
+                    <div class="lang-radio"></div>
+                    <span class="lang-label">English</span>
+                </div>
+                <div class="lang-option" onclick="selectLanguage('afrikaans')">
+                    <div class="lang-radio"></div>
+                    <span class="lang-label">Afrikaans</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- You can add more sidebar options here later -->
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <!-- Header -->
+            <header>
+                <h1>📰 NAMIBIAN FAKE NEWS DETECTOR</h1>
+                <p class="subtitle">Verify news claims in real-time using AI & trusted Namibian news sources</p>
+                <p class="sources">(The Namibian, Republikein, Kosmos 94.1, Namibian Sun)</p>
+            </header>
+
+            <!-- Main Content -->
+            <main>
+                <!-- Input Section -->
+                <section class="input-section">
+                    <textarea id="claimInput" placeholder="✍️ Enter a news claim: e.g. Namibia wins AFCON 2025" rows="5"></textarea>
+                    <button id="analyzeBtn" onclick="analyzeClaim()">🔍 Verify Claim</button>
+                </section>
+
+                <!-- Results Section -->
+                <section id="resultsSection" class="results-section" style="display: none;">
+                    <!-- Results will be dynamically inserted here -->
+                </section>
+
+                <!-- History Section -->
+                <section class="history-section">
+                    <div class="history-header">
+                        <h3>📖 Claim History (this session)</h3>
+                        <label>
+                            <input type="checkbox" id="showHistory" checked onchange="toggleHistory()">
+                            Show Claim History
+                        </label>
+                    </div>
+                    <div id="historyTable"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

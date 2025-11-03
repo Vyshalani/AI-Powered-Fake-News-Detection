@@ -106,14 +106,16 @@ def fetch_evidence(claim_text, num_results=5):
     print("[INFO] Starting Undetected-Chromedriver (Anti-Bot Mode)...")
     driver = None
     try:
-        # Initialize the undetected-chromedriver driver
+        # REMOVE the version_main parameter to auto-detect Chrome version
         driver = uc.Chrome(
             options=chrome_options,
             driver_executable_path=None, 
-            headless=True,
-            version_main=140 
+            headless=True
+            # Remove this line: version_main=140 
         )
         driver.set_page_load_timeout(LOAD_TIMEOUT)
+        print("✅ ChromeDriver started successfully!")
+        
     except Exception as e:
         print(f"[CRITICAL ERROR] Failed to start Undetected-Chromedriver. Error: {e}")
         return []
@@ -124,19 +126,18 @@ def fetch_evidence(claim_text, num_results=5):
         "Kosmos 94.1": TRUSTED_SITES["Kosmos 94.1"],
     }
     
-    # each working site will be asked to fetch up to num_results
-   
     per_site_limit = num_results
 
     for site_name, (url, selector) in WORKING_SITES.items():
+        print(f"🔍 Searching {site_name} for: {claim_text}")
         snippets = fetch_from_site(site_name, url, selector, claim_text, driver, per_site_limit) 
         evidence.extend(snippets)
         
     if driver:
         driver.quit()
+        print("✅ ChromeDriver closed successfully")
 
     return evidence
-
 
 # Example usage 
 
