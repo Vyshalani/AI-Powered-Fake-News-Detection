@@ -1,0 +1,20 @@
+--- Environment and Cache ---
+
+Python virtual environment folder
+
+venv/
+
+Byte-compiled Python files
+
+pycache/
+*.pyc
+*.pyd
+
+--- Operating System Files ---
+
+.DS_Store
+Thumbs.db
+
+--- Logs and Temporary Data ---
+
+*.log
