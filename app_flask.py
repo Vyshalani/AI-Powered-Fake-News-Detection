@@ -3,8 +3,77 @@ import pipeline.detect as detect
 import joblib
 import os
 import time
+import re
+from langdetect import detect, DetectorFactory
+
+# For consistent language detection results
+DetectorFactory.seed = 0
 
 app = Flask(__name__)
+
+# Simplified language detection function
+def detect_language(text):
+    """
+    Detect if text is English or Afrikaans
+    Returns: 'en', 'af', or 'other'
+    """
+    try:
+        # Simple word-based detection for Afrikaans vs English
+        afrikaans_indicators = ['die', 'en', 'van', 'het', 'sy', 'nie', 'om', 'vir', 'is', 'ek', 'jy', 'hy', 'ons', 'hulle']
+        english_indicators = ['the', 'and', 'of', 'to', 'a', 'in', 'is', 'it', 'you', 'that', 'he', 'was', 'for', 'on']
+        
+        words = text.lower().split()
+        
+        af_count = sum(1 for word in words if word in afrikaans_indicators)
+        en_count = sum(1 for word in words if word in english_indicators)
+        
+        # Use langdetect for more accurate detection
+        lang_code = detect(text)
+        
+        if lang_code == 'af' or (af_count > en_count and af_count >= 2):
+            return 'af'
+        elif lang_code == 'en' or (en_count > af_count and en_count >= 2):
+            return 'en'
+        else:
+            return 'other'
+            
+    except Exception:
+        # Fallback to word counting if langdetect fails
+        if af_count > en_count:
+            return 'af'
+        elif en_count > af_count:
+            return 'en'
+        else:
+            return 'other'
+
+def validate_input_text(text):
+    """
+    Comprehensive input validation
+    """
+    errors = []
+    
+    # Length validation
+    if len(text.strip()) < 10:
+        errors.append("Claim is too short. Please enter at least 10 characters.")
+    
+    if len(text.strip()) > 1000:
+        errors.append("Claim is too long. Please keep it under 1000 characters.")
+    
+    # Language validation
+    language = detect_language(text)
+    if language == 'other':
+        errors.append("Please enter text in English or Afrikaans only. Other languages are not supported.")
+    
+    # Character validation
+    if re.search(r'[^\w\s\.,!?;:\(\)\"\'-]', text):
+        errors.append("Text contains invalid characters. Please use only letters, numbers, and standard punctuation.")
+    
+    # Repetitive text detection
+    words = text.split()
+    if len(words) > 5 and len(set(words)) / len(words) < 0.3:
+        errors.append("Text appears to be repetitive. Please enter a meaningful news claim.")
+    
+    return errors, language
 
 # Load resources once at startup
 def load_resources():
@@ -19,7 +88,7 @@ def load_resources():
     try:
         model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
-        print("✅ Model resources loaded successfully")
+        print("Model resources loaded successfully")
         return model, vectorizer
     except Exception as e:
         print(f"Error loading model resources: {e}")
@@ -41,19 +110,29 @@ def analyze_claim():
     claim = data.get('claim', '').strip()
     session_id = data.get('session_id', 'default')
     
+    # Input validation
     if not claim:
         return jsonify({'error': 'Please enter a claim first.'}), 400
+    
+    # Comprehensive validation
+    validation_errors, detected_language = validate_input_text(claim)
+    if validation_errors:
+        return jsonify({'error': ' | '.join(validation_errors)}), 400
+    
+    # Check if model resources are loaded
+    if LOGREG_MODEL is None or LOGREG_VEC is None:
+        return jsonify({'error': 'System is still initializing. Please try again in a moment.'}), 503
     
     # Initialize session if not exists
     if session_id not in user_sessions:
         user_sessions[session_id] = {'history': [], 'lang': 'English'}
     
     try:
-        print(f"🔍 Analyzing claim: {claim}")  # Debug print
+        print(f"Analyzing claim in {detected_language}: {claim}")  # Debug print
         
         # Call your detection pipeline
         res = detect.detect_claim(claim)
-        print(f"✅ Detection result: {res}")  # Debug print
+        print(f"Detection result: {res}")  # Debug print
         
         # Process response (same logic as your Streamlit app)
         if isinstance(res, (list, tuple)):
@@ -64,7 +143,7 @@ def analyze_claim():
                 similarity = None
             else:
                 error_msg = f"Unexpected response shape from detect_claim(): {res}"
-                print(f"❌ {error_msg}")
+                print(f" {error_msg}")
                 return jsonify({'error': error_msg}), 500
         elif isinstance(res, dict):
             verdict = res.get("verdict") or res.get("label")
@@ -73,7 +152,7 @@ def analyze_claim():
             similarity = res.get("similarity")
         else:
             error_msg = f"Unexpected response type from detect_claim(): {type(res)}"
-            print(f"❌ {error_msg}")
+            print(f"{error_msg}")
             return jsonify({'error': error_msg}), 500
         
         # Ensure confidence is float
@@ -91,7 +170,7 @@ def analyze_claim():
             except:
                 sim_val = None
         
-        print(f"✅ Processed - Verdict: {verdict}, Confidence: {conf_val}")  # Debug
+        print(f"Processed - Verdict: {verdict}, Confidence: {conf_val}")  # Debug
         
         # Add to history
         history_entry = {
@@ -99,7 +178,8 @@ def analyze_claim():
             "verdict": verdict,
             "confidence": conf_val,
             "similarity": sim_val,
-            "evidence": evidence
+            "evidence": evidence,
+            "language": detected_language
         }
         
         user_sessions[session_id]['history'].append(history_entry)
@@ -117,16 +197,30 @@ def analyze_claim():
         
     except Exception as e:
         error_msg = f'Analysis failed: {str(e)}'
-        print(f"❌ {error_msg}")  # This will show in your terminal
+        print(f"{error_msg}")  # This will show in your terminal
         import traceback
         traceback.print_exc()  # This will print the full error stack
-        return jsonify({'error': error_msg}), 500
+        return jsonify({'error': 'System temporarily unavailable. Please try again shortly.'}), 500
     
 @app.route('/history/<session_id>')
 def get_history(session_id):
     """Get user's claim history"""
+    if session_id not in user_sessions:
+        return jsonify([])
+    
     history = user_sessions.get(session_id, {}).get('history', [])
     return jsonify(history)
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    status = {
+        'status': 'healthy' if LOGREG_MODEL and LOGREG_VEC else 'unhealthy',
+        'model_loaded': LOGREG_MODEL is not None,
+        'vectorizer_loaded': LOGREG_VEC is not None,
+        'timestamp': time.time()
+    }
+    return jsonify(status)
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='127.0.0.1', port=5000)
