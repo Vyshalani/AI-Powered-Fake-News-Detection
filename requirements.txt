@@ -5,12 +5,6 @@ googletrans
 beautifulsoup4
 requests
 
-# Streamlit App
-streamlit
-pandas
-numpy
-PyYAML
-joblib
 
 # Machine Learning / NLP
 scikit-learn
