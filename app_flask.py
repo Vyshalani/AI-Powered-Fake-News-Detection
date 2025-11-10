@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify
-import pipeline.detect as detect
+from pipeline.detect import detect_claim
 import joblib
 import os
 import time
 import re
-from langdetect import detect, DetectorFactory
+from langdetect import detect as detect_language, DetectorFactory
 
 # For consistent language detection results
 DetectorFactory.seed = 0
@@ -56,17 +56,13 @@ def validate_input_text(text):
     if len(text.strip()) < 10:
         errors.append("Claim is too short. Please enter at least 10 characters.")
     
-    if len(text.strip()) > 1000:
-        errors.append("Claim is too long. Please keep it under 1000 characters.")
+    if len(text.strip()) > 50000:
+        errors.append("Claim is too long. Please keep it under 5000 characters.")
     
     # Language validation
     language = detect_language(text)
     if language == 'other':
         errors.append("Please enter text in English or Afrikaans only. Other languages are not supported.")
-    
-    # Character validation
-    if re.search(r'[^\w\s\.,!?;:\(\)\"\'-]', text):
-        errors.append("Text contains invalid characters. Please use only letters, numbers, and standard punctuation.")
     
     # Repetitive text detection
     words = text.split()
@@ -131,7 +127,7 @@ def analyze_claim():
         print(f"Analyzing claim in {detected_language}: {claim}")  # Debug print
         
         # Call your detection pipeline
-        res = detect.detect_claim(claim)
+        res = detect_claim(claim)
         print(f"Detection result: {res}")  # Debug print
         
         # Process response (same logic as your Streamlit app)
