@@ -28,8 +28,8 @@ def detect_language(text):
         en_count = sum(1 for word in words if word in english_indicators)
         
         # Use langdetect for more accurate detection
-        lang_code = detect(text)
-        
+        lang_code = detect_language(text)
+
         if lang_code == 'af' or (af_count > en_count and af_count >= 2):
             return 'af'
         elif lang_code == 'en' or (en_count > af_count and en_count >= 2):
