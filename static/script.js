@@ -1,5 +1,4 @@
 let sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
-// Add this at the top of your existing script.js
 let currentLanguage = 'english';
 
 function selectLanguage(lang) {
@@ -12,7 +11,6 @@ function selectLanguage(lang) {
     
     document.querySelector(`.lang-option[onclick="selectLanguage('${lang}')"]`).classList.add('selected');
     
-    // You can add language-specific functionality here
     if (lang === 'afrikaans') {
         // Update UI texts to Afrikaans
         document.querySelector('h1').textContent = '📰 NAMIBIËSE VALS NUUS OPSPOORDER';
