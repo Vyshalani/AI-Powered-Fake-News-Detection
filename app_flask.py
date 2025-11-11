@@ -130,7 +130,7 @@ def analyze_claim():
         res = detect_claim(claim)
         print(f"Detection result: {res}")  # Debug print
         
-        # Process response (same logic as your Streamlit app)
+        # Process response 
         if isinstance(res, (list, tuple)):
             if len(res) >= 4:
                 verdict, confidence, evidence, similarity = res[:4]
